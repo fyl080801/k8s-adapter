@@ -1,0 +1,25 @@
+{
+  "prisma.pinToPrisma6": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  // Context7 MCP Integration Settings
+  "typescript.suggest.autoImports": true,
+  "typescript.suggest.completeFunctionCalls": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.suggestSelection": "first",
+  "editor.inlineSuggest.showToolbar": "onHover",
+  // Enable better IntelliSense for Context7
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  // Context7-friendly settings
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "editor.wordBasedSuggestions": "all",
+  "github.copilot.enable": {
+    "*": false
+  }
+}
