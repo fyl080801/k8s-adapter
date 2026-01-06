@@ -21,5 +21,18 @@
   "editor.wordBasedSuggestions": "all",
   "github.copilot.enable": {
     "*": false
+  },
+  // ESLint Integration - Show warnings and errors in editor
+  "eslint.enable": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "eslint.run": "onType",
+  "eslint.workingDirectories": ["."],
+  "eslint.options": {
+    "cache": true
   }
 }
