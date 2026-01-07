@@ -36,3 +36,17 @@ model Tag {
   name  String @default("")
   posts Post[] @relation("Post_tags")
 }
+
+model SyncState {
+  id                     String    @id @default(cuid())
+  resourceType           String    @unique @default("")
+  lastSyncTime           DateTime?
+  lastSyncDuration       Int?
+  lastSyncCount          Int?
+  resourceVersion        String    @default("")
+  status                 String?   @default("never")
+  error                  String    @default("")
+  informerReconnectCount Int?      @default(0)
+  totalResources         Int?      @default(0)
+  failedResources        Int?      @default(0)
+}

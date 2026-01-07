@@ -1,4 +1,5 @@
 import { V1DaemonSet } from '@kubernetes/client-node'
+import mongoose from 'mongoose'
 import {
   createK8sSchema,
   createK8sModel,
@@ -29,7 +30,7 @@ const DAEMON_SET_FIELDS = {
   numberMisscheduled: { type: Number, default: 0 },
   numberReady: { type: Number, default: 0 },
   updatedNumberScheduled: { type: Number, default: 0 },
-  selector: { type: Map, of: String, default: {} },
+  selector: { type: mongoose.Schema.Types.Mixed, default: {} },
 }
 
 /**

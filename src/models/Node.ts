@@ -1,4 +1,5 @@
 import { V1Node, V1NodeAddress, V1NodeCondition } from '@kubernetes/client-node'
+import mongoose from 'mongoose'
 import {
   createK8sSchema,
   createK8sModel,
@@ -49,8 +50,8 @@ const NODE_FIELDS = {
     kubeletVersion: { type: String },
     containerRuntimeVersion: { type: String },
   },
-  capacity: { type: Map, of: String },
-  allocatable: { type: Map, of: String },
+  capacity: { type: mongoose.Schema.Types.Mixed, default: {} },
+  allocatable: { type: mongoose.Schema.Types.Mixed, default: {} },
   conditions: [
     {
       type: { type: String, required: true },

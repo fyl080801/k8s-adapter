@@ -16,10 +16,10 @@ function createListHandler(config: K8sResourceConfig) {
 
       const query: any = {}
       if (config.namespaced && namespace) {
-        query.namespace = namespace
+        query.namespace = namespace // Use flattened namespace field
       }
       if (search) {
-        query.name = { $regex: search, $options: 'i' }
+        query.name = { $regex: search, $options: 'i' } // Use flattened name field
       }
 
       const skip = (Number(page) - 1) * Number(limit)
@@ -56,7 +56,9 @@ function createDetailHandler(config: K8sResourceConfig) {
   return async (req: Request, res: Response) => {
     try {
       const idKey = config.getIdKey()
-      const item = await config.model.findOne({ [idKey]: req.params.id })
+      // Use flattened field (uid) instead of nested metadata.uid
+      const queryKey = idKey
+      const item = await config.model.findOne({ [queryKey]: req.params.id })
 
       if (!item) {
         return res.status(404).json({ error: `${config.name} not found` })
@@ -79,9 +81,9 @@ function createNamespaceListHandler(config: K8sResourceConfig) {
       const { page = 1, limit = 10, search } = req.query
       const { namespace } = req.params
 
-      const query: any = { namespace }
+      const query: any = { namespace: namespace } // Use flattened namespace field
       if (search) {
-        query.name = { $regex: search, $options: 'i' }
+        query.name = { $regex: search, $options: 'i' } // Use flattened name field
       }
 
       const skip = (Number(page) - 1) * Number(limit)

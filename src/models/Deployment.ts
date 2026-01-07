@@ -1,4 +1,5 @@
 import { V1Deployment } from '@kubernetes/client-node'
+import mongoose from 'mongoose'
 import {
   createK8sSchema,
   createK8sModel,
@@ -28,7 +29,7 @@ const DEPLOYMENT_FIELDS = {
   updatedReplicas: { type: Number, default: 0 },
   availableReplicas: { type: Number, default: 0 },
   unavailableReplicas: { type: Number, default: 0 },
-  selector: { type: Map, of: String },
+  selector: { type: mongoose.Schema.Types.Mixed, default: {} },
   strategyType: { type: String },
 }
 

@@ -1,4 +1,5 @@
 import { V1Service, V1ServicePort } from '@kubernetes/client-node'
+import mongoose from 'mongoose'
 import {
   createK8sSchema,
   createK8sModel,
@@ -34,12 +35,12 @@ const SERVICE_FIELDS = {
     {
       name: { type: String },
       port: { type: Number, required: true },
-      targetPort: { type: Schema.Types.Mixed },
+      targetPort: { type: mongoose.Schema.Types.Mixed },
       protocol: { type: String },
       nodePort: { type: Number },
     },
   ],
-  selector: { type: Map, of: String },
+  selector: { type: mongoose.Schema.Types.Mixed, default: {} },
 }
 
 /**

@@ -254,6 +254,112 @@ input TagCreateInput {
   posts: PostRelateToManyForCreateInput
 }
 
+type SyncState {
+  id: ID!
+  resourceType: String
+  lastSyncTime: DateTime
+  lastSyncDuration: Int
+  lastSyncCount: Int
+  resourceVersion: String
+  status: String
+  error: String
+  informerReconnectCount: Int
+  totalResources: Int
+  failedResources: Int
+}
+
+input SyncStateWhereUniqueInput {
+  id: ID
+  resourceType: String
+}
+
+input SyncStateWhereInput {
+  AND: [SyncStateWhereInput!]
+  OR: [SyncStateWhereInput!]
+  NOT: [SyncStateWhereInput!]
+  id: IDFilter
+  resourceType: StringFilter
+  lastSyncTime: DateTimeNullableFilter
+  lastSyncDuration: IntNullableFilter
+  lastSyncCount: IntNullableFilter
+  resourceVersion: StringFilter
+  status: StringNullableFilter
+  error: StringFilter
+  informerReconnectCount: IntNullableFilter
+  totalResources: IntNullableFilter
+  failedResources: IntNullableFilter
+}
+
+input IntNullableFilter {
+  equals: Int
+  in: [Int!]
+  notIn: [Int!]
+  lt: Int
+  lte: Int
+  gt: Int
+  gte: Int
+  not: IntNullableFilter
+}
+
+input StringNullableFilter {
+  equals: String
+  in: [String!]
+  notIn: [String!]
+  lt: String
+  lte: String
+  gt: String
+  gte: String
+  contains: String
+  startsWith: String
+  endsWith: String
+  not: StringNullableFilter
+}
+
+input SyncStateOrderByInput {
+  id: OrderDirection
+  resourceType: OrderDirection
+  lastSyncTime: OrderDirection
+  lastSyncDuration: OrderDirection
+  lastSyncCount: OrderDirection
+  resourceVersion: OrderDirection
+  status: OrderDirection
+  error: OrderDirection
+  informerReconnectCount: OrderDirection
+  totalResources: OrderDirection
+  failedResources: OrderDirection
+}
+
+input SyncStateUpdateInput {
+  resourceType: String
+  lastSyncTime: DateTime
+  lastSyncDuration: Int
+  lastSyncCount: Int
+  resourceVersion: String
+  status: String
+  error: String
+  informerReconnectCount: Int
+  totalResources: Int
+  failedResources: Int
+}
+
+input SyncStateUpdateArgs {
+  where: SyncStateWhereUniqueInput!
+  data: SyncStateUpdateInput!
+}
+
+input SyncStateCreateInput {
+  resourceType: String
+  lastSyncTime: DateTime
+  lastSyncDuration: Int
+  lastSyncCount: Int
+  resourceVersion: String
+  status: String
+  error: String
+  informerReconnectCount: Int
+  totalResources: Int
+  failedResources: Int
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
@@ -278,6 +384,12 @@ type Mutation {
   updateTags(data: [TagUpdateArgs!]!): [Tag]
   deleteTag(where: TagWhereUniqueInput!): Tag
   deleteTags(where: [TagWhereUniqueInput!]!): [Tag]
+  createSyncState(data: SyncStateCreateInput!): SyncState
+  createSyncStates(data: [SyncStateCreateInput!]!): [SyncState]
+  updateSyncState(where: SyncStateWhereUniqueInput!, data: SyncStateUpdateInput!): SyncState
+  updateSyncStates(data: [SyncStateUpdateArgs!]!): [SyncState]
+  deleteSyncState(where: SyncStateWhereUniqueInput!): SyncState
+  deleteSyncStates(where: [SyncStateWhereUniqueInput!]!): [SyncState]
   endSession: Boolean!
   authenticateUserWithPassword(email: String!, password: String!): UserAuthenticationWithPasswordResult
   createInitialUser(data: CreateInitialUserInput!): UserAuthenticationWithPasswordSuccess!
@@ -310,6 +422,9 @@ type Query {
   tag(where: TagWhereUniqueInput!): Tag
   tags(where: TagWhereInput! = {}, orderBy: [TagOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: TagWhereUniqueInput): [Tag!]
   tagsCount(where: TagWhereInput! = {}): Int
+  syncState(where: SyncStateWhereUniqueInput!): SyncState
+  syncStates(where: SyncStateWhereInput! = {}, orderBy: [SyncStateOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: SyncStateWhereUniqueInput): [SyncState!]
+  syncStatesCount(where: SyncStateWhereInput! = {}): Int
   keystone: KeystoneMeta!
   authenticatedItem: AuthenticatedItem
 }

@@ -1,4 +1,5 @@
 import { V1PersistentVolumeClaim } from '@kubernetes/client-node'
+import mongoose from 'mongoose'
 import {
   createK8sSchema,
   createK8sModel,
@@ -23,7 +24,7 @@ export interface IPersistentVolumeClaim extends BaseK8sDocument {
 const PVC_FIELDS = {
   phase: { type: String },
   accessModes: [{ type: String }],
-  capacity: { type: Map, of: String, default: {} },
+  capacity: { type: mongoose.Schema.Types.Mixed, default: {} },
   storageClass: { type: String },
   volumeName: { type: String },
 }

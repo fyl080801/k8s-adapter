@@ -1,4 +1,5 @@
 import { V1ConfigMap } from '@kubernetes/client-node'
+import mongoose from 'mongoose'
 import {
   createK8sSchema,
   createK8sModel,
@@ -19,8 +20,8 @@ export interface IConfigMap extends BaseK8sDocument {
  * Define ConfigMap-specific fields
  */
 const CONFIG_MAP_FIELDS = {
-  data: { type: Map, of: String, default: {} },
-  binaryData: { type: Map, of: String, default: {} },
+  data: { type: mongoose.Schema.Types.Mixed, default: {} },
+  binaryData: { type: mongoose.Schema.Types.Mixed, default: {} },
   immutable: { type: Boolean },
 }
 

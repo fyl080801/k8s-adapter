@@ -5,6 +5,7 @@
 
 import * as k8s from '@kubernetes/client-node'
 import { K8sResourceConfig } from './types'
+import { AppConfig } from '../config/app-config'
 
 export class GenericKubernetesInformer {
   private k8sApi: {
@@ -16,6 +17,8 @@ export class GenericKubernetesInformer {
   }
   private watchers: Map<string, () => void> = new Map()
   private resourceConfigs: K8sResourceConfig[]
+  private reconnectAttempts: Map<string, number> = new Map()
+  private isShuttingDown = false
 
   constructor(resourceConfigs: K8sResourceConfig[]) {
     const kc = new k8s.KubeConfig()
@@ -52,26 +55,50 @@ export class GenericKubernetesInformer {
   }
 
   private async watchResource(config: K8sResourceConfig) {
+    await this.startWatch(config)
+  }
+
+  /**
+   * Start a watch with automatic reconnection
+   */
+  private async startWatch(
+    config: K8sResourceConfig,
+    resourceVersion?: string,
+  ): Promise<void> {
     const path = this.getWatchPath(config)
+
+    // Build watch options
+    const watchOptions: Record<string, any> = {}
+    if (resourceVersion) {
+      watchOptions.resourceVersion = resourceVersion
+    }
 
     const watch = await this.k8sApi.watch.watch(
       path,
-      {},
-      (phase, obj) => this.handleEvent(config, phase, obj),
-      err => this.handleError(config, err),
+      watchOptions,
+      (phase, obj) => {
+        // Update resource version for resume capability
+        if (obj?.metadata?.resourceVersion) {
+          resourceVersion = obj.metadata.resourceVersion
+        }
+        this.handleEvent(config, phase, obj)
+      },
+      err => this.handleError(config, err, resourceVersion),
     )
 
     this.watchers.set(config.plural, () => watch.abort())
+
+    // Reset reconnect attempts on successful start
+    this.reconnectAttempts.set(config.plural, 0)
   }
 
   private getWatchPath(config: K8sResourceConfig): string {
     const apiGroup = this.getApiGroup(config.apiVersion)
-    const version = config.apiVersion
 
     if (apiGroup === 'core') {
       return `/api/v1/${config.plural}`
     } else {
-      return `/apis/${apiGroup}/${version}/${config.plural}`
+      return `/apis/${config.apiVersion}/${config.plural}`
     }
   }
 
@@ -89,44 +116,162 @@ export class GenericKubernetesInformer {
     eventObj: any,
   ) {
     try {
-      const resource = eventObj.object
+      // Validate event object structure
+      if (!eventObj) {
+        console.warn(
+          `⚠️  ${config.name} received invalid event object (phase: ${phase})`,
+        )
+        return
+      }
+
+      const resource = eventObj
+
+      // Validate resource metadata
+      if (!resource.metadata) {
+        console.warn(
+          `⚠️  ${config.name} received resource without metadata (phase: ${phase})`,
+        )
+        return
+      }
+
       const eventType = phase.toUpperCase()
 
       console.log(
         `${config.icon} ${eventType} ${config.name}: ${
           config.namespaced
-            ? `${resource.metadata.namespace}/${resource.metadata.name}`
-            : resource.metadata.name
+            ? `${resource.metadata.namespace || 'default'}/${resource.metadata.name || 'unknown'}`
+            : resource.metadata.name || 'unknown'
         }`,
       )
 
       const idKey = config.getIdKey()
       const idValue = resource.metadata[idKey]
 
+      if (!idValue) {
+        console.warn(
+          `⚠️  ${config.name} resource missing ${idKey} (phase: ${phase})`,
+        )
+        return
+      }
+
       if (eventType === 'DELETED') {
-        await config.model.deleteOne({ [idKey]: idValue })
+        // Use flattened uid field for queries
+        const queryKey = idKey === 'uid' ? 'uid' : idKey
+        await config.model.deleteOne({ [queryKey]: idValue })
       } else {
         const data = config.transformer(resource)
-        await config.model.findOneAndUpdate(
-          { [idKey]: idValue },
-          { ...data, resourceVersion: resource.metadata.resourceVersion },
-          { upsert: true, new: true },
-        )
+        const queryKey = idKey === 'uid' ? 'uid' : idKey
+        await config.model.findOneAndUpdate({ [queryKey]: idValue }, data, {
+          upsert: true,
+          new: true,
+        })
       }
     } catch (error) {
       console.error(`❌ Error handling ${config.name} event:`, error)
     }
   }
 
-  private handleError(config: K8sResourceConfig, err: any) {
-    console.error(`❌ Error in ${config.name} informer:`, err)
+  private handleError(
+    config: K8sResourceConfig,
+    err: any,
+    resourceVersion?: string,
+  ) {
+    // Ignore null/undefined errors (sometimes K8s watch API sends null on initial connection)
+    if (!err) {
+      console.warn(
+        `⚠️  ${config.name} informer received null error (this is often normal during initial watch setup)`,
+      )
+      return
+    }
 
-    // TODO: Implement reconnection logic
-    // For now, just log the error
+    // Ignore AbortError - this is expected when we abort the watch during shutdown
+    if (err?.name === 'AbortError' || err?.type === 'aborted') {
+      // Silently ignore abort errors - they're expected during shutdown
+      return
+    }
+
+    // Don't reconnect during shutdown
+    if (this.isShuttingDown) {
+      return
+    }
+
+    // Log actual errors with details
+    const errorMessage = err?.message || err?.toString() || 'Unknown error'
+    const statusCode = err?.statusCode || err?.response?.statusCode
+
+    console.error(
+      `❌ Error in ${config.name} informer: ${errorMessage}${statusCode ? ` (HTTP ${statusCode})` : ''}`,
+    )
+
+    // Log additional details for debugging
+    if (err?.body) {
+      console.error(`   Details:`, err.body)
+    }
+
+    // Attempt reconnection for recoverable errors
+    if (AppConfig.FEATURES.ENABLE_K8S_WATCH_RECONNECT) {
+      this.attemptReconnection(config, resourceVersion)
+    }
+  }
+
+  /**
+   * Attempt to reconnect the watch with exponential backoff
+   */
+  private async attemptReconnection(
+    config: K8sResourceConfig,
+    resourceVersion?: string,
+  ) {
+    const currentAttempts = this.reconnectAttempts.get(config.plural) || 0
+
+    if (currentAttempts >= AppConfig.RETRY.maxAttempts) {
+      console.error(
+        `❌ ${config.name} informer: Max reconnection attempts (${AppConfig.RETRY.maxAttempts}) reached. Giving up.`,
+      )
+      return
+    }
+
+    const nextAttempt = currentAttempts + 1
+    this.reconnectAttempts.set(config.plural, nextAttempt)
+
+    const delay = AppConfig.calculateBackoff(currentAttempts)
+
+    console.log(
+      `🔄 ${config.name} informer: Reconnecting in ${Math.round(delay)}ms (attempt ${nextAttempt}/${AppConfig.RETRY.maxAttempts})...`,
+    )
+
+    // Stop the existing watch if it's still running
+    const existingAbort = this.watchers.get(config.plural)
+    if (existingAbort) {
+      try {
+        existingAbort()
+      } catch (error) {
+        // Ignore errors when aborting a failed watch
+      }
+      this.watchers.delete(config.plural)
+    }
+
+    // Wait before reconnecting
+    await AppConfig.sleep(delay)
+
+    // Attempt to restart the watch
+    try {
+      console.log(`🔄 ${config.name} informer: Reconnecting...`)
+      await this.startWatch(config, resourceVersion)
+      console.log(`✅ ${config.name} informer: Reconnected successfully`)
+    } catch (error: any) {
+      console.error(
+        `❌ ${config.name} informer: Reconnection attempt ${nextAttempt} failed:`,
+        error.message,
+      )
+
+      // Continue reconnection attempts
+      this.attemptReconnection(config, resourceVersion)
+    }
   }
 
   stop() {
     console.log('🛑 Stopping Kubernetes Informers...')
+    this.isShuttingDown = true
 
     this.watchers.forEach((abort, plural) => {
       try {
@@ -137,6 +282,8 @@ export class GenericKubernetesInformer {
     })
 
     this.watchers.clear()
+    this.reconnectAttempts.clear()
+    this.isShuttingDown = false
     console.log('✅ All Kubernetes Informers stopped')
   }
 

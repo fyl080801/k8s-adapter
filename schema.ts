@@ -15,6 +15,7 @@ import {
   relationship,
   password,
   timestamp,
+  integer,
   select,
 } from '@keystone-6/core/fields'
 
@@ -144,6 +145,100 @@ export const lists = {
       name: text(),
       // this can be helpful to find out all the Posts associated with a Tag
       posts: relationship({ ref: 'Post.tags', many: true }),
+    },
+  }),
+
+  // SyncState: Tracks Kubernetes resource synchronization state
+  SyncState: list({
+    access: allowAll,
+
+    ui: {
+      isHidden: false,
+      label: 'Sync State',
+      description: 'Tracks synchronization status of Kubernetes resources',
+    },
+
+    fields: {
+      resourceType: text({
+        validation: { isRequired: true },
+        isIndexed: 'unique',
+        ui: {
+          displayMode: 'cards',
+          cardFields: ['status', 'lastSyncTime'],
+        },
+      }),
+
+      lastSyncTime: timestamp({
+        ui: {
+          label: 'Last Sync Time',
+          displayMode: 'timestamp',
+        },
+      }),
+
+      lastSyncDuration: integer({
+        ui: {
+          label: 'Last Sync Duration (ms)',
+          itemView: { fieldMode: 'read' },
+        },
+      }),
+
+      lastSyncCount: integer({
+        ui: {
+          label: 'Last Sync Count',
+          itemView: { fieldMode: 'read' },
+        },
+      }),
+
+      resourceVersion: text({
+        ui: {
+          label: 'Resource Version',
+          itemView: { fieldMode: 'read' },
+        },
+      }),
+
+      status: select({
+        options: [
+          { label: 'Never', value: 'never' },
+          { label: 'In Progress', value: 'in_progress' },
+          { label: 'Completed', value: 'completed' },
+          { label: 'Failed', value: 'failed' },
+        ],
+        defaultValue: 'never',
+        ui: {
+          displayMode: 'segmented-control',
+        },
+      }),
+
+      error: text({
+        ui: {
+          label: 'Error Message',
+          itemView: { fieldMode: 'read' },
+        },
+      }),
+
+      informerReconnectCount: integer({
+        defaultValue: 0,
+        ui: {
+          label: 'Informer Reconnect Count',
+          itemView: { fieldMode: 'read' },
+        },
+      }),
+
+      totalResources: integer({
+        defaultValue: 0,
+        ui: {
+          label: 'Total Resources',
+          itemView: { fieldMode: 'read' },
+        },
+      }),
+
+      failedResources: integer({
+        defaultValue: 0,
+        ui: {
+          label: 'Failed Resources',
+          itemView: { fieldMode: 'read' },
+        },
+      }),
     },
   }),
 } satisfies Lists

@@ -28,7 +28,7 @@ export interface IPod extends BaseK8sDocument {
 const POD_FIELDS = {
   phase: { type: String },
   podIP: { type: String },
-  nodeName: { type: String, index: true },
+  nodeName: { type: String },
   startTime: { type: Date },
   containers: [
     {

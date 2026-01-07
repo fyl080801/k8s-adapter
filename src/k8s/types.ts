@@ -43,6 +43,8 @@ export interface K8sResourceConfig {
   getIdKey: () => string
   /** Icon for logging */
   icon: string
+  /** Singular form for API method names (e.g., 'Pod', 'Node', 'StatefulSet') */
+  methodSingular?: string
 }
 
 /**
@@ -65,6 +67,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '📦',
     getIdKey: () => 'uid',
     transformer: transformPod,
+    methodSingular: 'Pod',
   },
   {
     name: 'Service',
@@ -76,6 +79,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '🔗',
     getIdKey: () => 'uid',
     transformer: transformService,
+    methodSingular: 'Service',
   },
   {
     name: 'Node',
@@ -87,6 +91,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '🖥️',
     getIdKey: () => 'name',
     transformer: transformNode,
+    methodSingular: 'Node',
   },
   {
     name: 'ConfigMap',
@@ -98,6 +103,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '📋',
     getIdKey: () => 'uid',
     transformer: transformConfigMap,
+    methodSingular: 'ConfigMap',
   },
   {
     name: 'Secret',
@@ -109,6 +115,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '🔐',
     getIdKey: () => 'uid',
     transformer: transformSecret,
+    methodSingular: 'Secret',
   },
   {
     name: 'Event',
@@ -120,6 +127,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '⚡',
     getIdKey: () => 'uid',
     transformer: transformEvent,
+    methodSingular: 'Event',
   },
   {
     name: 'PersistentVolumeClaim',
@@ -131,6 +139,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '💾',
     getIdKey: () => 'uid',
     transformer: transformPersistentVolumeClaim,
+    methodSingular: 'PersistentVolumeClaim',
   },
 
   // Apps/v1 Resources
@@ -144,6 +153,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '🎯',
     getIdKey: () => 'uid',
     transformer: transformDeployment,
+    methodSingular: 'Deployment',
   },
   {
     name: 'StatefulSet',
@@ -155,6 +165,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '🔢',
     getIdKey: () => 'uid',
     transformer: transformStatefulSet,
+    methodSingular: 'StatefulSet',
   },
   {
     name: 'DaemonSet',
@@ -166,6 +177,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '👻',
     getIdKey: () => 'uid',
     transformer: transformDaemonSet,
+    methodSingular: 'DaemonSet',
   },
 
   // Networking.k8s.io/v1 Resources
@@ -179,6 +191,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '🌐',
     getIdKey: () => 'uid',
     transformer: transformIngress,
+    methodSingular: 'Ingress',
   },
 
   // APIextensions.k8s.io/v1 Resources
@@ -192,6 +205,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '🔧',
     getIdKey: () => 'name',
     transformer: transformCustomResourceDefinition,
+    methodSingular: 'CustomResourceDefinition',
   },
 
   // Additional Core v1 Resources
@@ -205,6 +219,7 @@ export const RESOURCE_CONFIGS: K8sResourceConfig[] = [
     icon: '💿',
     getIdKey: () => 'name',
     transformer: transformPersistentVolume,
+    methodSingular: 'PersistentVolume',
   },
 ]
 

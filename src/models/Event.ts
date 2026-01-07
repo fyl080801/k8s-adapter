@@ -32,8 +32,8 @@ export interface IEvent extends BaseK8sDocument {
  * Define Event-specific fields
  */
 const EVENT_FIELDS = {
-  type: { type: String, required: true, index: true },
-  reason: { type: String, index: true },
+  type: { type: String, required: true },
+  reason: { type: String },
   message: { type: String },
   source: {
     component: { type: String },
@@ -45,7 +45,7 @@ const EVENT_FIELDS = {
     name: { type: String },
     uid: { type: String },
   },
-  firstTimestamp: { type: Date, index: true },
+  firstTimestamp: { type: Date },
   lastTimestamp: { type: Date },
   count: { type: Number, default: 0 },
 }

@@ -1,4 +1,5 @@
 import { V1Secret } from '@kubernetes/client-node'
+import mongoose from 'mongoose'
 import {
   createK8sSchema,
   createK8sModel,
@@ -20,7 +21,7 @@ export interface ISecret extends BaseK8sDocument {
  */
 const SECRET_FIELDS = {
   type: { type: String, required: true },
-  data: { type: Map, of: String, default: {} },
+  data: { type: mongoose.Schema.Types.Mixed, default: {} },
   immutable: { type: Boolean },
 }
 

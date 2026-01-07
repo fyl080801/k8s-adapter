@@ -1,4 +1,5 @@
 import { V1StatefulSet } from '@kubernetes/client-node'
+import mongoose from 'mongoose'
 import {
   createK8sSchema,
   createK8sModel,
@@ -30,7 +31,7 @@ const STATEFUL_SET_FIELDS = {
   updatedReplicas: { type: Number, default: 0 },
   currentRevision: { type: String },
   updateRevision: { type: String },
-  selector: { type: Map, of: String, default: {} },
+  selector: { type: mongoose.Schema.Types.Mixed, default: {} },
   serviceName: { type: String },
 }
 
