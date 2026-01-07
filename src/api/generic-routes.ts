@@ -143,13 +143,6 @@ export function generateRoutes(): Router {
         createNamespaceListHandler(config),
       )
     }
-
-    console.log(`✅ Generated routes for ${config.name}:`)
-    console.log(`   GET    /api/v1/${config.plural}`)
-    console.log(`   GET    /api/v1/${config.plural}/:id`)
-    if (config.namespaced) {
-      console.log(`   GET    /api/v1/namespace/:namespace/${config.plural}`)
-    }
   })
 
   return router

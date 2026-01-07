@@ -60,44 +60,26 @@ export class HybridSyncManager {
    * Initialize the hybrid sync system
    */
   async initialize(): Promise<void> {
-    console.log('🎯 Initializing Hybrid Sync Manager')
-    console.log('   Strategy:', this.options.syncOnStartup)
-    console.log(
-      '   Auto-sync on failure:',
-      this.options.autoSyncOnInformerFailure,
-    )
-    console.log(
-      '   Periodic sync interval:',
-      this.options.periodicSyncIntervalHours > 0
-        ? `${this.options.periodicSyncIntervalHours}h`
-        : 'disabled',
-    )
-
     try {
       // Step 1: Decide whether to perform full sync
       const shouldFullSync = await this.shouldPerformFullSync()
 
       if (shouldFullSync) {
-        console.log('🔄 Performing full sync...')
         await this.performFullSync()
-      } else {
-        console.log('✅ Skipping full sync (data is fresh)')
       }
 
       // Step 2: Start informers with enhanced error handling
-      console.log('📡 Starting informers...')
       await this.startInformers()
 
       // Step 3: Mark as ready
       this.ready = true
-      console.log('✅ Hybrid Sync Manager initialized')
 
       // Step 4: Start periodic sync if configured
       if (this.options.periodicSyncIntervalHours > 0) {
         this.startPeriodicSync()
       }
     } catch (error) {
-      console.error('❌ Failed to initialize Hybrid Sync Manager:', error)
+      console.error('Failed to initialize Hybrid Sync Manager:', error)
       throw error
     }
   }
@@ -121,7 +103,6 @@ export class HybridSyncManager {
 
     // No sync state exists - first run
     if (states.length === 0) {
-      console.log('   📊 No sync state found - first run')
       return true
     }
 
@@ -132,9 +113,6 @@ export class HybridSyncManager {
     )
 
     if (missingResources.length > 0) {
-      console.log(
-        `   📊 Missing resources: ${missingResources.map(c => c.name).join(', ')}`,
-      )
       return true
     }
 
@@ -149,23 +127,16 @@ export class HybridSyncManager {
     })
 
     if (staleStates.length > 0) {
-      console.log(
-        `   📊 Stale data found: ${staleStates.map(s => s.resourceType).join(', ')}`,
-      )
       return true
     }
 
     // Check if any syncs failed previously
     const failedStates = states.filter(s => s.status === 'failed')
     if (failedStates.length > 0) {
-      console.log(
-        `   📊 Previous failures: ${failedStates.map(s => s.resourceType).join(', ')}`,
-      )
       return true
     }
 
     // Data is fresh and complete
-    console.log('   ✅ Data is fresh and complete')
     return false
   }
 
@@ -173,8 +144,6 @@ export class HybridSyncManager {
    * Perform full sync for all resources
    */
   private async performFullSync(): Promise<void> {
-    console.log('🔄 Starting full sync...')
-
     const startTime = Date.now()
 
     const results = await this.syncInstance.syncAll(
@@ -198,11 +167,6 @@ export class HybridSyncManager {
         error: result.error,
       })
     }
-
-    const successCount = results.filter(r => r.success).length
-    console.log(
-      `✅ Full sync completed: ${successCount}/${results.length} resources (${duration}ms)`,
-    )
   }
 
   /**
@@ -224,9 +188,6 @@ export class HybridSyncManager {
 
       // Handle 410 Gone (resourceVersion expired)
       if (err?.statusCode === 410 && this.options.autoSyncOnInformerFailure) {
-        console.log(
-          `🔄 ResourceVersion expired for ${config.name}, triggering full sync...`,
-        )
         await this.syncSingleResource(config)
       }
 
@@ -238,9 +199,6 @@ export class HybridSyncManager {
         attempts >= AppConfig.RETRY.maxAttempts &&
         this.options.autoSyncOnInformerFailure
       ) {
-        console.log(
-          `🔄 Max reconnection attempts for ${config.name}, triggering full sync...`,
-        )
         await this.syncSingleResource(config)
 
         // Reset reconnect counter
@@ -255,8 +213,6 @@ export class HybridSyncManager {
    * Sync a single resource type
    */
   private async syncSingleResource(config: K8sResourceConfig): Promise<void> {
-    console.log(`🔄 Syncing single resource: ${config.name}`)
-
     const startTime = Date.now()
 
     try {
@@ -270,8 +226,6 @@ export class HybridSyncManager {
         lastSyncCount: count,
         error: null,
       })
-
-      console.log(`✅ Synced ${count} ${config.plural} in ${duration}ms`)
     } catch (error: any) {
       const duration = Date.now() - startTime
 
@@ -283,7 +237,7 @@ export class HybridSyncManager {
         error: error.message || String(error),
       })
 
-      console.error(`❌ Failed to sync ${config.name}:`, error)
+      console.error(`Failed to sync ${config.name}:`, error)
     }
   }
 
@@ -326,18 +280,13 @@ export class HybridSyncManager {
   private startPeriodicSync(): void {
     const intervalMs = this.options.periodicSyncIntervalHours * 60 * 60 * 1000
 
-    console.log(
-      `🕐 Starting periodic sync (every ${this.options.periodicSyncIntervalHours}h)`,
-    )
-
     this.periodicSyncTimer = setInterval(async () => {
       if (this.isShuttingDown) return
 
-      console.log('🕐 Running periodic sync...')
       try {
         await this.performFullSync()
       } catch (error) {
-        console.error('❌ Periodic sync failed:', error)
+        console.error('Periodic sync failed:', error)
       }
     }, intervalMs)
   }
@@ -346,7 +295,6 @@ export class HybridSyncManager {
    * Stop the sync manager
    */
   async shutdown(): Promise<void> {
-    console.log('🛑 Shutting down Hybrid Sync Manager...')
     this.isShuttingDown = true
 
     // Stop periodic sync
@@ -357,8 +305,6 @@ export class HybridSyncManager {
 
     // Stop informers
     this.informerInstance.stop()
-
-    console.log('✅ Hybrid Sync Manager shutdown complete')
   }
 
   /**

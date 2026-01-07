@@ -49,14 +49,13 @@ export async function connectDB(): Promise<typeof mongoose> {
     )
 
     isConnected = true
-    console.log('✅ Connected to MongoDB')
 
     // Setup connection event handlers
     setupConnectionHandlers()
 
     return mongoose
   } catch (error) {
-    console.error('❌ Failed to connect to MongoDB:', error)
+    console.error('Failed to connect to MongoDB:', error)
     throw error
   }
 }
@@ -75,16 +74,14 @@ function setupConnectionHandlers() {
   mongoose.connection.removeAllListeners('connected')
   mongoose.connection.removeAllListeners('reconnected')
 
-  mongoose.connection.on('disconnected', event => {
+  mongoose.connection.on('disconnected', () => {
     isConnected = false
-    console.warn('⚠️  MongoDB disconnected:', event)
 
     // Schedule reconnection attempt
     if (!reconnectTimer) {
       reconnectTimer = setTimeout(() => {
-        console.log('🔄 Attempting to reconnect to MongoDB...')
         connectDB().catch(err => {
-          console.error('❌ MongoDB reconnection failed:', err)
+          console.error('MongoDB reconnection failed:', err)
         })
         reconnectTimer = null
       }, AppConfig.RETRY.initialDelayMs)
@@ -92,17 +89,15 @@ function setupConnectionHandlers() {
   })
 
   mongoose.connection.on('error', error => {
-    console.error('❌ MongoDB connection error:', error)
+    console.error('MongoDB connection error:', error)
   })
 
   mongoose.connection.on('connected', () => {
     isConnected = true
-    console.log('✅ MongoDB connected')
   })
 
   mongoose.connection.on('reconnected', () => {
     isConnected = true
-    console.log('✅ MongoDB reconnected')
   })
 }
 
@@ -118,7 +113,6 @@ export async function disconnectDB() {
 
   isConnected = false
   await mongoose.disconnect()
-  console.log('✅ MongoDB disconnected')
 }
 
 /**

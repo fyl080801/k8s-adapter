@@ -51,8 +51,6 @@ export class HealthMonitor {
     })
 
     this.reconnectCallbacks.set(resourceType, reconnectFn)
-
-    console.log(`✅ Registered health monitor for ${resourceType}`)
   }
 
   /**
@@ -80,9 +78,6 @@ export class HealthMonitor {
       // Mark as unhealthy after 3 consecutive errors
       if (health.errorCount >= 3) {
         health.isHealthy = false
-        console.warn(
-          `⚠️  ${resourceType} informer marked as unhealthy (${health.errorCount} errors)`,
-        )
       }
     }
   }
@@ -92,13 +87,8 @@ export class HealthMonitor {
    */
   start() {
     if (this.checkInterval) {
-      console.warn('⚠️  Health monitor already running')
       return
     }
-
-    console.log(
-      `🏥 Starting health monitor (check every ${this.config.intervalMs}ms)`,
-    )
 
     this.checkInterval = setInterval(() => {
       this.performHealthCheck()
@@ -112,7 +102,6 @@ export class HealthMonitor {
     if (this.checkInterval) {
       clearInterval(this.checkInterval)
       this.checkInterval = undefined
-      console.log('🏥 Health monitor stopped')
     }
   }
 
@@ -129,39 +118,27 @@ export class HealthMonitor {
 
       // Check if no events received in 2x interval
       if (timeSinceLastEvent > this.config.intervalMs * 2 && health.isHealthy) {
-        console.warn(
-          `⚠️  No events from ${resourceType} for ${Math.floor(
-            timeSinceLastEvent / 1000,
-          )}s`,
-        )
         health.isHealthy = false
       }
 
       // Attempt reconnection if unhealthy and auto-reconnect enabled
       if (!health.isHealthy && this.config.autoReconnect) {
         if (health.errorCount < this.config.maxRetries) {
-          console.log(
-            `🔄 Attempting to reconnect ${resourceType} (attempt ${
-              health.errorCount + 1
-            }/${this.config.maxRetries})`,
-          )
-
           const reconnectFn = this.reconnectCallbacks.get(resourceType)
           if (reconnectFn) {
             try {
               await reconnectFn()
               health.isHealthy = true
               health.errorCount = 0
-              console.log(`✅ Successfully reconnected ${resourceType}`)
             } catch (error) {
               health.errorCount++
               health.lastError = error as Error
-              console.error(`❌ Failed to reconnect ${resourceType}:`, error)
+              console.error(`Failed to reconnect ${resourceType}:`, error)
             }
           }
         } else {
           console.error(
-            `💀 ${resourceType} max reconnection attempts reached. Giving up.`,
+            `${resourceType} max reconnection attempts reached. Giving up.`,
           )
         }
       }

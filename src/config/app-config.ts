@@ -161,44 +161,12 @@ export class AppConfig {
 
         if (attempt < this.RETRY.maxAttempts - 1) {
           const delay = this.calculateBackoff(attempt)
-          console.warn(
-            `⚠️  ${context} failed (attempt ${attempt + 1}/${this.RETRY.maxAttempts}), ` +
-              `retrying in ${Math.round(delay)}ms...`,
-          )
           await this.sleep(delay)
         }
       }
     }
 
-    console.error(
-      `❌ ${context} failed after ${this.RETRY.maxAttempts} attempts`,
-    )
+    console.error(`${context} failed after ${this.RETRY.maxAttempts} attempts`)
     throw lastError
-  }
-
-  /**
-   * Log configuration on startup
-   */
-  static logConfig() {
-    console.log('⚙️  Application Configuration:')
-    console.log('   Retry:', {
-      maxAttempts: this.RETRY.maxAttempts,
-      initialDelayMs: this.RETRY.initialDelayMs,
-      maxDelayMs: this.RETRY.maxDelayMs,
-    })
-    console.log('   Timeouts:', {
-      mongodb: `${this.TIMEOUT.mongodbConnection}ms`,
-      k8sRequest: `${this.TIMEOUT.k8sRequest}ms`,
-      k8sWatch: `${this.TIMEOUT.k8sWatch}ms`,
-    })
-    console.log('   Bulk Write:', {
-      batchSize: this.BULK_WRITE.batchSize,
-      maxConcurrent: this.BULK_WRITE.maxConcurrent,
-    })
-    console.log('   Features:', {
-      k8sWatchReconnect: this.FEATURES.ENABLE_K8S_WATCH_RECONNECT,
-      mongoReconnect: this.FEATURES.ENABLE_MONGO_RECONNECT,
-      chunkedBulkWrite: this.FEATURES.ENABLE_CHUNKED_BULK_WRITE,
-    })
   }
 }

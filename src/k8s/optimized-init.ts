@@ -50,31 +50,16 @@ let syncStatus: SyncStatus = {
  * Removes documents with null/undefined metadata.name that would cause duplicate key errors
  */
 async function cleanupInvalidData() {
-  let totalDeleted = 0
-
   for (const config of RESOURCE_CONFIGS) {
     try {
-      const deleteResult = await config.model.deleteMany({
+      await config.model.deleteMany({
         'metadata.name': { $in: [null, undefined] },
       })
-
-      if (deleteResult.deletedCount > 0) {
-        console.log(
-          `   🗑️  ${config.icon} ${config.name}: Deleted ${deleteResult.deletedCount} invalid records`,
-        )
-        totalDeleted += deleteResult.deletedCount
-      }
     } catch (error) {
       console.error(
-        `   ⚠️  ${config.icon} ${config.name}: Failed to clean up - ${error}`,
+        `${config.icon} ${config.name}: Failed to clean up - ${error}`,
       )
     }
-  }
-
-  if (totalDeleted > 0) {
-    console.log(`\n   ✅ Total invalid records deleted: ${totalDeleted}`)
-  } else {
-    console.log('   ✅ No invalid data found')
   }
 }
 
@@ -82,15 +67,6 @@ async function cleanupInvalidData() {
  * Initialize Kubernetes Informer and perform initial sync
  */
 export async function initializeK8sInformer() {
-  console.log('='.repeat(60))
-  console.log('🎯 Initializing Optimized Kubernetes Informer System')
-  console.log('='.repeat(60))
-  console.log(`📋 Registered Resources: ${RESOURCE_CONFIGS.length}`)
-  RESOURCE_CONFIGS.forEach(config => {
-    console.log(`   - ${config.icon} ${config.name} (${config.apiVersion})`)
-  })
-  console.log('='.repeat(60))
-
   // Reset sync status
   syncStatus = {
     status: 'in_progress',
@@ -111,12 +87,10 @@ export async function initializeK8sInformer() {
 
   try {
     // Step 0: Clean up invalid data before sync
-    console.log('\n🧹 Step 0: Cleaning up invalid data...')
     syncStatus.step = 'cleanup'
     await cleanupInvalidData()
 
     // Step 1: Perform full initial sync
-    console.log('\n🔄 Step 1: Performing full resource sync...')
     syncStatus.step = 'sync'
 
     const syncResults = await syncInstance.syncAll(
@@ -144,20 +118,14 @@ export async function initializeK8sInformer() {
     const failureCount = syncResults.length - successCount
 
     if (failureCount > 0) {
-      console.warn(`⚠️  ${failureCount} resource types failed to sync`)
       syncResults
         .filter(r => !r.success)
         .forEach(r => {
-          console.error(`   ❌ ${r.resource}: ${r.error}`)
+          console.error(`${r.resource}: ${r.error}`)
         })
     }
 
-    console.log(
-      `\n✅ Sync completed: ${successCount}/${syncResults.length} resource types synced`,
-    )
-
     // Step 2: Start informers for real-time updates
-    console.log('\n📡 Step 2: Starting real-time informers...')
     syncStatus.step = 'informer'
     await informerInstance.start()
 
@@ -167,17 +135,13 @@ export async function initializeK8sInformer() {
     syncStatus.endTime = new Date()
     syncStatus.currentResource = undefined
 
-    console.log('\n' + '='.repeat(60))
-    console.log('✅ Kubernetes Informer System initialized successfully')
-    console.log('='.repeat(60))
-
     return {
       informer: informerInstance,
       sync: syncInstance,
       resourceCount: RESOURCE_CONFIGS.length,
     }
   } catch (error) {
-    console.error('❌ Failed to initialize Kubernetes Informer:', error)
+    console.error('Failed to initialize Kubernetes Informer:', error)
     syncStatus.status = 'failed'
     syncStatus.error = error instanceof Error ? error.message : String(error)
     syncStatus.endTime = new Date()
@@ -211,8 +175,6 @@ export function getSync(): GenericKubernetesSync {
  * Graceful shutdown
  */
 export async function shutdownK8sInformer() {
-  console.log('\n🛑 Shutting down Kubernetes Informer...')
-
   if (informerInstance) {
     informerInstance.stop()
     informerInstance = null
@@ -221,8 +183,6 @@ export async function shutdownK8sInformer() {
   if (syncInstance) {
     syncInstance = null
   }
-
-  console.log('✅ Kubernetes Informer shutdown complete')
 }
 
 /**

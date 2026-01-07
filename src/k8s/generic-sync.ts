@@ -42,8 +42,6 @@ export class GenericKubernetesSync {
       },
     ) => void,
   ) {
-    console.log('🔄 Starting full sync of Kubernetes resources...')
-
     try {
       const syncPromises = this.resourceConfigs.map(async config => {
         try {
@@ -60,7 +58,6 @@ export class GenericKubernetesSync {
               },
             },
           )
-          console.log(`✅ ${config.icon} Synced ${count} ${config.plural}`)
 
           // Notify progress callback: completed
           progressCallback?.(config.name, {
@@ -70,7 +67,7 @@ export class GenericKubernetesSync {
 
           return { resource: config.name, count, success: true }
         } catch (error) {
-          console.error(`❌ Failed to sync ${config.name}:`, error)
+          console.error(`Failed to sync ${config.name}:`, error)
 
           // Notify progress callback: failed
           progressCallback?.(config.name, {
@@ -83,29 +80,17 @@ export class GenericKubernetesSync {
       })
 
       const results = await Promise.all(syncPromises)
-
-      const successCount = results.filter(r => r.success).length
-      const totalCount = results.reduce((sum, r) => sum + r.count, 0)
-
-      console.log(
-        `✅ Full sync completed: ${successCount}/${results.length} resource types, ${totalCount} total resources`,
-      )
-
       return results
     } catch (error) {
-      console.error('❌ Error during full sync:', error)
+      console.error('Error during full sync:', error)
       throw error
     }
   }
 
   private async syncResource(config: K8sResourceConfig): Promise<number> {
-    console.log(`${config.icon} Syncing ${config.plural}...`)
-
     const listFn = this.getApiListFunction(config)
     const response = await listFn()
     const items = response.items
-
-    console.log(`   Found ${items.length} ${config.plural}`)
 
     // Prepare bulk operations
     const bulkOps = items
@@ -114,9 +99,6 @@ export class GenericKubernetesSync {
         const idKey = config.getIdKey()
         const idValue = item.metadata?.[idKey]
         if (!idValue) {
-          console.warn(
-            `⚠️  Skipping ${config.name} with missing ${idKey}: ${item.metadata?.name || 'unknown'}`,
-          )
           return false
         }
         return true
@@ -160,9 +142,6 @@ export class GenericKubernetesSync {
   ): Promise<void> {
     const batchSize = AppConfig.BULK_WRITE.batchSize
     const totalOps = bulkOps.length
-    let processedOps = 0
-
-    console.log(`   📦 Using chunked bulk writes (batch size: ${batchSize})`)
 
     // Process in chunks
     for (let i = 0; i < totalOps; i += batchSize) {
@@ -172,11 +151,6 @@ export class GenericKubernetesSync {
 
       try {
         await config.model.bulkWrite(chunk)
-        processedOps += chunk.length
-
-        console.log(
-          `   ✅ Chunk ${chunkNum}/${totalChunks} processed (${processedOps}/${totalOps} operations)`,
-        )
 
         // Add delay between batches to avoid overwhelming the database
         if (i + batchSize < totalOps) {
@@ -185,11 +159,7 @@ export class GenericKubernetesSync {
       } catch (error: any) {
         // Log detailed error for debugging
         console.error(
-          `❌ Failed to write chunk ${chunkNum}/${totalChunks} for ${config.name}:`,
-        )
-        console.error(`   Error: ${error.message}`)
-        console.error(
-          `   Chunk size: ${chunk.length}, Processed: ${processedOps}/${totalOps}`,
+          `Failed to write chunk ${chunkNum}/${totalChunks} for ${config.name}: ${error.message}`,
         )
 
         // Check if error is recoverable (network issues, timeouts, etc.)
@@ -200,18 +170,14 @@ export class GenericKubernetesSync {
           error.message?.includes('timeout')
 
         if (isRecoverable) {
-          console.log(`   🔄 Retrying chunk ${chunkNum} after error...`)
-
           // Retry this specific chunk with exponential backoff
           await AppConfig.sleep(AppConfig.calculateBackoff(0))
 
           try {
             await config.model.bulkWrite(chunk)
-            processedOps += chunk.length
-            console.log(`   ✅ Chunk ${chunkNum} retry succeeded`)
           } catch (retryError: any) {
             console.error(
-              `❌ Chunk ${chunkNum} retry failed: ${retryError.message}`,
+              `Chunk ${chunkNum} retry failed: ${retryError.message}`,
             )
             throw retryError
           }
@@ -221,10 +187,6 @@ export class GenericKubernetesSync {
         }
       }
     }
-
-    console.log(
-      `   ✅ All chunks processed successfully (${processedOps} operations)`,
-    )
   }
 
   private getApiListFunction(config: K8sResourceConfig): () => Promise<any> {

@@ -36,22 +36,16 @@ export class GenericKubernetesInformer {
   }
 
   async start() {
-    console.log('🚀 Starting Generic Kubernetes Informers...')
-
     const startPromises = this.resourceConfigs.map(async config => {
       try {
         await this.watchResource(config)
-        console.log(`✅ ${config.icon} ${config.name} Informer started`)
       } catch (error) {
-        console.error(`❌ Failed to start ${config.name} Informer:`, error)
+        console.error(`Failed to start ${config.name} Informer:`, error)
         throw error
       }
     })
 
     await Promise.all(startPromises)
-    console.log(
-      `✅ All ${this.resourceConfigs.length} Kubernetes Informers started`,
-    )
   }
 
   private async watchResource(config: K8sResourceConfig) {
@@ -118,9 +112,6 @@ export class GenericKubernetesInformer {
     try {
       // Validate event object structure
       if (!eventObj) {
-        console.warn(
-          `⚠️  ${config.name} received invalid event object (phase: ${phase})`,
-        )
         return
       }
 
@@ -128,29 +119,15 @@ export class GenericKubernetesInformer {
 
       // Validate resource metadata
       if (!resource.metadata) {
-        console.warn(
-          `⚠️  ${config.name} received resource without metadata (phase: ${phase})`,
-        )
         return
       }
 
       const eventType = phase.toUpperCase()
 
-      console.log(
-        `${config.icon} ${eventType} ${config.name}: ${
-          config.namespaced
-            ? `${resource.metadata.namespace || 'default'}/${resource.metadata.name || 'unknown'}`
-            : resource.metadata.name || 'unknown'
-        }`,
-      )
-
       const idKey = config.getIdKey()
       const idValue = resource.metadata[idKey]
 
       if (!idValue) {
-        console.warn(
-          `⚠️  ${config.name} resource missing ${idKey} (phase: ${phase})`,
-        )
         return
       }
 
@@ -178,15 +155,11 @@ export class GenericKubernetesInformer {
   ) {
     // Ignore null/undefined errors (sometimes K8s watch API sends null on initial connection)
     if (!err) {
-      console.warn(
-        `⚠️  ${config.name} informer received null error (this is often normal during initial watch setup)`,
-      )
       return
     }
 
     // Ignore AbortError - this is expected when we abort the watch during shutdown
     if (err?.name === 'AbortError' || err?.type === 'aborted') {
-      // Silently ignore abort errors - they're expected during shutdown
       return
     }
 
@@ -200,12 +173,12 @@ export class GenericKubernetesInformer {
     const statusCode = err?.statusCode || err?.response?.statusCode
 
     console.error(
-      `❌ Error in ${config.name} informer: ${errorMessage}${statusCode ? ` (HTTP ${statusCode})` : ''}`,
+      `Error in ${config.name} informer: ${errorMessage}${statusCode ? ` (HTTP ${statusCode})` : ''}`,
     )
 
     // Log additional details for debugging
     if (err?.body) {
-      console.error(`   Details:`, err.body)
+      console.error(`Details:`, err.body)
     }
 
     // Attempt reconnection for recoverable errors
@@ -225,7 +198,7 @@ export class GenericKubernetesInformer {
 
     if (currentAttempts >= AppConfig.RETRY.maxAttempts) {
       console.error(
-        `❌ ${config.name} informer: Max reconnection attempts (${AppConfig.RETRY.maxAttempts}) reached. Giving up.`,
+        `${config.name} informer: Max reconnection attempts reached. Giving up.`,
       )
       return
     }
@@ -234,10 +207,6 @@ export class GenericKubernetesInformer {
     this.reconnectAttempts.set(config.plural, nextAttempt)
 
     const delay = AppConfig.calculateBackoff(currentAttempts)
-
-    console.log(
-      `🔄 ${config.name} informer: Reconnecting in ${Math.round(delay)}ms (attempt ${nextAttempt}/${AppConfig.RETRY.maxAttempts})...`,
-    )
 
     // Stop the existing watch if it's still running
     const existingAbort = this.watchers.get(config.plural)
@@ -255,12 +224,10 @@ export class GenericKubernetesInformer {
 
     // Attempt to restart the watch
     try {
-      console.log(`🔄 ${config.name} informer: Reconnecting...`)
       await this.startWatch(config, resourceVersion)
-      console.log(`✅ ${config.name} informer: Reconnected successfully`)
     } catch (error: any) {
       console.error(
-        `❌ ${config.name} informer: Reconnection attempt ${nextAttempt} failed:`,
+        `${config.name} informer: Reconnection attempt ${nextAttempt} failed:`,
         error.message,
       )
 
@@ -270,21 +237,19 @@ export class GenericKubernetesInformer {
   }
 
   stop() {
-    console.log('🛑 Stopping Kubernetes Informers...')
     this.isShuttingDown = true
 
     this.watchers.forEach((abort, plural) => {
       try {
         abort()
       } catch (error) {
-        console.error(`❌ Error stopping ${plural} watcher:`, error)
+        console.error(`Error stopping ${plural} watcher:`, error)
       }
     })
 
     this.watchers.clear()
     this.reconnectAttempts.clear()
     this.isShuttingDown = false
-    console.log('✅ All Kubernetes Informers stopped')
   }
 
   /**
