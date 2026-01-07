@@ -1,12 +1,59 @@
-# Keystone + Kubernetes Informer
+# K8s Adapter - Monorepo
 
-This is a **Keystone 6** headless CMS with integrated **Kubernetes Informer** functionality for real-time K8s resource synchronization.
+This is a **Keystone 6** headless CMS with integrated **Kubernetes Informer** functionality, organized as a monorepo for better separation of concerns.
+
+## 🏗️ Monorepo Structure
+
+This project is organized as an npm workspace with two packages:
+
+```
+packages/
+├── schema/          # Keystone list definitions (data models)
+│   └── src/
+│       ├── schema.ts    # User, Post, Tag, SyncState lists
+│       └── index.ts     # Export point
+└── core/            # Main application (K8s integration + API)
+    ├── src/
+    │   ├── api/         # RESTful API routes
+    │   ├── k8s/         # Kubernetes Informer integration
+    │   ├── lib/         # Utilities (MongoDB, etc.)
+    │   ├── middleware/  # Express middleware
+    │   └── models/      # Mongoose models for K8s resources
+    ├── keystone.ts      # Entry point
+    └── auth.ts          # Authentication config
+```
+
+### Package Overview
+
+**@k8s-adapter/schema**
+
+- Contains all Keystone CMS list definitions
+- Defines data structure (User, Post, Tag, SyncState)
+- Pure TypeScript with no runtime dependencies on core logic
+- Can be imported independently for schema validation
+
+**@k8s-adapter/core**
+
+- Main application with Keystone server
+- Kubernetes Informer integration
+- RESTful API for K8s resources
+- MongoDB models and connections
+- Imports schema from `@k8s-adapter/schema`
 
 ## 🚀 Quick Start
 
 ```bash
+# Install dependencies (installs for all packages)
 npm install
+
+# Start development server
 npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
 ```
 
 Visit the Admin UI at [http://localhost:3000](http://localhost:3000)
@@ -17,19 +64,22 @@ All detailed documentation is organized in the **[docs/](docs/)** folder:
 
 ### Essential Reading
 
-- **[docs/README.md](docs/README.md)** - Complete documentation index
-- **[docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)** - Project architecture and structure
-- **[docs/guides/ADD_NEW_RESOURCES.md](docs/guides/ADD_NEW_RESOURCES.md)** - How to add new K8s resources (中文)
+- **[CLAUDE.md](CLAUDE.md)** - Development guide for Claude Code (AI-assisted development)
+- **[docs/STRUCTURE.md](docs/STRUCTURE.md)** - Project architecture and structure
+- **[docs/QUICKSTART.md](docs/QUICKSTART.md)** - Quick start guide
+- **[docs/MIGRATION.md](docs/MIGRATION.md)** - Migration guide
 
-### Key Features
+### Package Documentation
 
-- **[docs/guides/K8S_TYPES_MIGRATION.md](docs/guides/K8S_TYPES_MIGRATION.md)** - Using official K8s TypeScript types
-- **[docs/OPTIMIZATION.md](docs/OPTIMIZATION.md)** - Performance optimizations and best practices
+- **[docs/PACKAGE-CORE.md](docs/PACKAGE-CORE.md)** - Core package documentation
+- **[docs/PACKAGE-SCHEMA.md](docs/PACKAGE-SCHEMA.md)** - Schema package documentation
 
-### Quick Links
+### Logging Documentation
 
-- **[CLAUDE.md](CLAUDE.md)** - Development guide for Claude Code
-- **[README.k8s.md](README.k8s.md)** - Kubernetes-specific documentation (中文)
+- **[docs/LOGGING.md](docs/LOGGING.md)** - Logging system overview
+- **[docs/LOGGER_QUICKREF.md](docs/LOGGER_QUICKREF.md)** - Logger quick reference
+- **[docs/LOGGER_IMPLEMENTATION.md](docs/LOGGER_IMPLEMENTATION.md)** - Logger implementation details
+- **[docs/WINSTON_LOGGER_SUMMARY.md](docs/WINSTON_LOGGER_SUMMARY.md)** - Winston logger summary
 
 ## 🎯 Project Overview
 
@@ -44,12 +94,16 @@ This application serves two purposes:
   - SQLite (Prisma) for Keystone's internal data
   - MongoDB for Kubernetes resource storage
 
+- **Monorepo Benefits**:
+  - Clear separation between schema definitions and business logic
+  - Schema can be versioned and shared independently
+  - Easier to test schema changes in isolation
+  - Better code organization and maintainability
+
 - **Real-time Sync**:
   - Full sync on startup
   - Kubernetes Informer for real-time watch
   - RESTful API at `/api/v1`
-
-- **Type-Safe Models**: Uses official `@kubernetes/client-node` TypeScript types
 
 ## 📖 Quick Start Guide
 
@@ -59,12 +113,20 @@ This application serves two purposes:
 npm install
 ```
 
+This installs dependencies for all packages in the monorepo.
+
 ### 2. Configure Environment
 
-Create `.env` file:
+Create `.env` file in the root:
 
 ```bash
 MONGODB_URI=mongodb://localhost:27017/k8s-resources
+
+# Optional: Logging configuration
+LOG_LEVEL=info                    # debug, info, warn, error
+ENABLE_FILE_LOGGING=false         # Enable file logging with daily rotation
+LOG_DIR=./logs                    # Directory for log files
+ENABLE_LOG_COLORS=true            # Enable colored console output
 ```
 
 ### 3. Start Development Server
@@ -72,6 +134,8 @@ MONGODB_URI=mongodb://localhost:27017/k8s-resources
 ```bash
 npm run dev
 ```
+
+This starts the core package's development server.
 
 ### 4. Test API Endpoints
 
@@ -89,39 +153,51 @@ curl http://localhost:3000/api/v1/deployments?namespace=default
 ## 🛠️ Development Commands
 
 ```bash
-npm run dev          # Start Keystone dev server with hot reload
-npm run build        # Build for production
-npm start            # Start production server
+npm run dev          # Start Keystone dev server (core package)
+npm run build        # Build for production (core package)
+npm start            # Start production server (core package)
 npm run db:generate  # Regenerate Prisma client
 npm run test:api     # Test K8s API endpoints
+npm run clean        # Clean all packages
 ```
 
-## 🏗️ Project Structure
+### Package-Specific Commands
 
-```
-├── docs/                        # Complete documentation
-│   ├── README.md               # Documentation index
-│   ├── PROJECT_STRUCTURE.md    # Architecture details
-│   ├── OPTIMIZATION.md         # Performance best practices
-│   ├── guides/                 # Development guides
-│   │   ├── ADD_NEW_RESOURCES.md
-│   │   └── K8S_TYPES_MIGRATION.md
-│   └── archive/                # Historical documentation
-├── src/
-│   ├── api/                   # RESTful API routes
-│   ├── k8s/                   # Kubernetes integration
-│   │   ├── types.ts           # Resource configuration registry
-│   │   ├── generic-sync.ts
-│   │   └── generic-informer.ts
-│   ├── lib/                   # Utilities
-│   │   └── k8s-schema-helper.ts  # Type-safe schema utilities
-│   └── models/                # Mongoose models (11 K8s resources)
-├── keystone.ts                # Main entry point
-├── auth.ts                    # Authentication configuration
-└── schema.prisma              # Keystone database schema
+```bash
+# Schema package
+npm run dev --workspace=packages/schema  # Watch schema changes
+npm run build --workspace=packages/schema  # Build schema
+
+# Core package
+npm run dev --workspace=packages/core    # Start dev server
+npm run build --workspace=packages/core  # Build core
 ```
 
-See **[docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)** for complete structure.
+## 🏗️ Working with the Monorepo
+
+### Adding New Fields to Schema
+
+1. Edit `packages/schema/src/schema.ts`
+2. The schema package will be automatically imported by the core package
+3. No need to restart - Keystone will hot-reload the schema
+
+### Modifying Core Logic
+
+1. Edit files in `packages/core/src/`
+2. Changes will hot-reload in development mode
+3. Schema is imported from `@k8s-adapter/schema`
+
+### Building Packages
+
+The schema package must be built before it can be imported:
+
+```bash
+# Build schema package
+npm run build --workspace=packages/schema
+
+# Core package uses workspace references
+# No build step needed if developing
+```
 
 ## 🎯 Supported K8s Resources
 
@@ -143,32 +219,14 @@ All resources use official TypeScript types from `@kubernetes/client-node`:
 
 The project uses a **generic, configuration-driven architecture**:
 
-1. Create Mongoose model (see [docs/guides/ADD_NEW_RESOURCES.md](docs/guides/ADD_NEW_RESOURCES.md))
-2. Register in `src/k8s/types.ts`
+1. Create Mongoose model in `packages/core/src/models/`
+2. Register in `packages/core/src/k8s/types.ts`
 3. That's it! Automatically gets:
    - Full sync on startup
    - Real-time Informer watch
    - RESTful API endpoints
 
-## 🔍 Key Features
-
-### Type Safety
-
-- Official K8s TypeScript types
-- Full IntelliSense support
-- Compile-time type checking
-
-### Performance
-
-- Dual-database design (SQLite + MongoDB)
-- Optimized sync strategies
-- Generic architecture reduces code by ~22%
-
-### Developer Experience
-
-- Auto-generated API routes
-- Hot reload in development
-- Comprehensive documentation
+See [docs/guides/ADD_NEW_RESOURCES.md](docs/guides/ADD_NEW_RESOURCES.md) for detailed instructions.
 
 ## 📖 Additional Documentation
 
@@ -178,39 +236,18 @@ See **[docs/README.md](docs/README.md)** for complete documentation index.
 
 See [CLAUDE.md](CLAUDE.md) for common issues and solutions.
 
+### Common Monorepo Issues
+
+**Schema changes not reflected:**
+
+- Ensure the schema package is built: `npm run build --workspace=packages/schema`
+- Restart the dev server
+
+**Import errors:**
+
+- Run `npm install` to ensure workspace links are set up correctly
+- Check that `packages/schema/package.json` has the correct name
+
 ---
 
-**Last Updated:** 2026-01-06
-
-### Changing the database
-
-We've set you up with an [SQLite database](https://keystonejs.com/docs/apis/config#sqlite) for ease-of-use. If you're wanting to use PostgreSQL, you can!
-
-Just change the `db` property on line 16 of the Keystone file [./keystone.ts](./keystone.ts) to
-
-```typescript
-db: {
-    provider: 'postgresql',
-    url: process.env.DATABASE_URL || 'DATABASE_URL_TO_REPLACE',
-}
-```
-
-And provide your database url from PostgreSQL.
-
-For more on database configuration, check out or [DB API Docs](https://keystonejs.com/docs/apis/config#db)
-
-### Auth
-
-We've put auth into its own file to make this humble starter easier to navigate. To explore it without auth turned on, comment out the `isAccessAllowed` on line 21 of the Keystone file [./keystone.ts](./keystone.ts).
-
-For more on auth, check out our [Authentication API Docs](https://keystonejs.com/docs/apis/auth#authentication-api)
-
-### Adding a frontend
-
-As a Headless CMS, Keystone can be used with any frontend that uses GraphQL. It provides a GraphQL endpoint you can write queries against at `/api/graphql` (by default [http://localhost:3000/api/graphql](http://localhost:3000/api/graphql)). At Thinkmill, we tend to use [Next.js](https://nextjs.org/) and [Apollo GraphQL](https://www.apollographql.com/docs/react/get-started/) as our frontend and way to write queries, but if you have your own favourite, feel free to use it.
-
-A walkthrough on how to do this is forthcoming, but in the meantime our [todo example](https://github.com/keystonejs/keystone-react-todo-demo) shows a Keystone set up with a frontend. For a more full example, you can also look at an example app we built for [Prisma Day 2021](https://github.com/keystonejs/prisma-day-2021-workshop)
-
-### Embedding Keystone in a Next.js frontend
-
-While Keystone works as a standalone app, you can embed your Keystone app into a [Next.js](https://nextjs.org/) app. This is quite a different setup to the starter, and we recommend checking out our walkthrough for that [here](https://keystonejs.com/docs/walkthroughs/embedded-mode-with-sqlite-nextjs#how-to-embed-keystone-sq-lite-in-a-next-js-app).
+**Last Updated:** 2026-01-07

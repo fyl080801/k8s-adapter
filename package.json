@@ -1,34 +1,28 @@
 {
-  "name": "keystone-app",
-  "version": "1.0.3",
+  "name": "k8s-adapter-monorepo",
+  "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "dev": "keystone dev",
-    "start": "keystone start",
-    "build": "keystone build",
-    "db:generate": "prisma generate",
-    "test:api": "./scripts/test-api.sh",
-    "lint": "eslint \"src/**/*.ts\" --max-warnings=0",
-    "lint:fix": "eslint \"src/**/*.ts\" --fix",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\"",
-    "prepare": "husky"
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
   },
-  "dependencies": {
-    "@keystone-6/auth": "^8.1.0",
-    "@keystone-6/core": "^6.5.1",
-    "@keystone-6/fields-document": "^9.1.1",
-    "@kubernetes/client-node": "^1.4.0",
-    "@prisma/client": "^5.22.0",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "mongodb": "^7.0.0",
-    "mongoose": "^9.1.2",
-    "typescript": "^5.5.0"
+  "scripts": {
+    "dev": "pnpm --filter @k8s-adapter/schema watch & pnpm --filter @k8s-adapter/core dev",
+    "dev:core": "pnpm --filter @k8s-adapter/core dev",
+    "dev:schema": "pnpm --filter @k8s-adapter/schema watch",
+    "start": "pnpm --filter @k8s-adapter/core start",
+    "build": "pnpm --filter @k8s-adapter/schema build && pnpm --filter @k8s-adapter/core build",
+    "db:generate": "pnpm --filter @k8s-adapter/core db:generate",
+    "test:api": "pnpm --filter @k8s-adapter/core test:api",
+    "lint": "pnpm --filter @k8s-adapter/core lint",
+    "lint:fix": "pnpm --filter @k8s-adapter/core lint:fix",
+    "format": "pnpm --filter @k8s-adapter/core format",
+    "format:check": "pnpm --filter @k8s-adapter/core format:check",
+    "verify": "bash scripts/verify-monorepo.sh",
+    "clean": "pnpm -r --parallel clean"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@types/express": "^4.17.25",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.57.1",
@@ -38,10 +32,10 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.4.2",
-    "prisma": "^5.22.0"
+    "typescript": "^5.5.0"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx}": [
+    "packages/**/*.{ts,tsx}": [
       "eslint --fix",
       "prettier --write"
     ],
