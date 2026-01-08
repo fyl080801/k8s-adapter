@@ -31,7 +31,9 @@
     "typescriptreact"
   ],
   "eslint.run": "onType",
-  "eslint.workingDirectories": ["."],
+  "eslint.workingDirectories": [
+    "."
+  ],
   "eslint.options": {
     "cache": true
   },

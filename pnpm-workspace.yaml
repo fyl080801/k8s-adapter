@@ -5,5 +5,10 @@ onlyBuiltDependencies:
   - '@apollo/protobufjs'
   - '@prisma/client'
   - '@prisma/engines'
+  - '@swc/core'
+  - better-sqlite3
+  - core-js-pure
   - esbuild
   - prisma
+  - sharp
+  - unrs-resolver
