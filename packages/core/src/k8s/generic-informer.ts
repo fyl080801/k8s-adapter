@@ -165,10 +165,7 @@ export class GenericKubernetesInformer {
             })
           }
         } catch (error) {
-          console.error(
-            `❌ Error processing ${config.name} event in queue:`,
-            error,
-          )
+          logger.error(`Error processing ${config.name} event in queue`, error)
         }
       })
 
@@ -177,7 +174,7 @@ export class GenericKubernetesInformer {
         this.processEventQueue()
       }
     } catch (error) {
-      console.error(`❌ Error handling ${config.name} event:`, error)
+      logger.error(`Error handling ${config.name} event`, error)
     }
   }
 
@@ -232,13 +229,14 @@ export class GenericKubernetesInformer {
     const errorMessage = err?.message || err?.toString() || 'Unknown error'
     const statusCode = err?.statusCode || err?.response?.statusCode
 
-    console.error(
+    logger.error(
       `Error in ${config.name} informer: ${errorMessage}${statusCode ? ` (HTTP ${statusCode})` : ''}`,
+      err,
     )
 
     // Log additional details for debugging
     if (err?.body) {
-      console.error(`Details:`, err.body)
+      logger.debug(`Error details: ${JSON.stringify(err.body)}`)
     }
 
     // Attempt reconnection for recoverable errors
@@ -257,7 +255,7 @@ export class GenericKubernetesInformer {
     const currentAttempts = this.reconnectAttempts.get(config.plural) || 0
 
     if (currentAttempts >= AppConfig.RETRY.maxAttempts) {
-      console.error(
+      logger.error(
         `${config.name} informer: Max reconnection attempts reached. Giving up.`,
       )
       return
@@ -286,9 +284,9 @@ export class GenericKubernetesInformer {
     try {
       await this.startWatch(config, resourceVersion)
     } catch (error: any) {
-      console.error(
-        `${config.name} informer: Reconnection attempt ${nextAttempt} failed:`,
-        error.message,
+      logger.error(
+        `${config.name} informer: Reconnection attempt ${nextAttempt} failed`,
+        error,
       )
 
       // Continue reconnection attempts

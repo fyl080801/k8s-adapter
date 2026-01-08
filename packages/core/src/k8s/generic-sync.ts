@@ -156,7 +156,7 @@ export class GenericKubernetesSync {
 
             results.push({ resource: config.name, count, success: true })
           } catch (error) {
-            console.error(`Failed to sync ${config.name}:`, error)
+            logger.error(`Failed to sync ${config.name}`, error)
 
             // Notify progress callback: failed
             progressCallback?.(config.name, {
@@ -176,7 +176,7 @@ export class GenericKubernetesSync {
 
       return results
     } catch (error) {
-      console.error('Error during full sync:', error)
+      logger.error('Error during full sync', error)
       throw error
     }
   }
@@ -252,8 +252,9 @@ export class GenericKubernetesSync {
         }
       } catch (error: any) {
         // Log detailed error for debugging
-        console.error(
+        logger.error(
           `Failed to write chunk ${chunkNum}/${totalChunks} for ${config.name}: ${error.message}`,
+          error,
         )
 
         // Check if error is recoverable (network issues, timeouts, etc.)
@@ -270,8 +271,9 @@ export class GenericKubernetesSync {
           try {
             await config.model.bulkWrite(chunk)
           } catch (retryError: any) {
-            console.error(
+            logger.error(
               `Chunk ${chunkNum} retry failed: ${retryError.message}`,
+              retryError,
             )
             throw retryError
           }

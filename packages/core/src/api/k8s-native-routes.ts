@@ -16,6 +16,9 @@ import {
   getContexts,
 } from '../lib/k8s-client'
 import { getResourceConfig } from '../k8s/types'
+import { createLogger } from '../lib/logger'
+
+const logger = createLogger('K8sNativeAPI')
 
 const router = Router()
 
@@ -37,7 +40,7 @@ router.get('/cluster/info', (_req, res) => {
       availableContexts: contexts,
     })
   } catch (error: any) {
-    console.error('Error getting cluster info:', error)
+    logger.error('Error getting cluster info', error)
     res
       .status(500)
       .json({ error: `Failed to get cluster info: ${error.message}` })
@@ -71,7 +74,7 @@ router.get('/namespaces/:namespace/pods/:name/logs', async (req, res) => {
 
     res.type('text/plain').send(logs)
   } catch (error: any) {
-    console.error('Error getting pod logs:', error)
+    logger.error('Error getting pod logs', error)
     res.status(500).json({ error: error.message })
   }
 })
@@ -92,7 +95,7 @@ router.get('/namespaces/:namespace/pods/:name/events', async (req, res) => {
       count: events.length,
     })
   } catch (error: any) {
-    console.error('Error getting pod events:', error)
+    logger.error('Error getting pod events', error)
     res.status(500).json({ error: error.message })
   }
 })
@@ -138,7 +141,7 @@ router.get('/namespaces/:namespace/:resource/:name/yaml', async (req, res) => {
 
     res.json(obj)
   } catch (error: any) {
-    console.error('Error getting resource manifest:', error)
+    logger.error('Error getting resource manifest', error)
     res.status(500).json({ error: error.message })
   }
 })
@@ -179,7 +182,7 @@ router.get('/:resource/:name/yaml', async (req, res) => {
 
     res.json(obj)
   } catch (error: any) {
-    console.error('Error getting resource manifest:', error)
+    logger.error('Error getting resource manifest', error)
     res.status(500).json({ error: error.message })
   }
 })
@@ -217,7 +220,7 @@ router.get(
         count: events.length,
       })
     } catch (error: any) {
-      console.error('Error getting resource events:', error)
+      logger.error('Error getting resource events', error)
       res.status(500).json({ error: error.message })
     }
   },
@@ -276,7 +279,7 @@ router.post('/namespaces/:namespace/:resource', async (req, res) => {
       data: result,
     })
   } catch (error: any) {
-    console.error('Error creating resource:', error)
+    logger.error('Error creating resource', error)
     res.status(500).json({ error: error.message })
   }
 })
@@ -329,7 +332,7 @@ router.post('/:resource', async (req, res) => {
       data: result,
     })
   } catch (error: any) {
-    console.error('Error creating resource:', error)
+    logger.error('Error creating resource', error)
     res.status(500).json({ error: error.message })
   }
 })
@@ -394,7 +397,7 @@ router.put('/namespaces/:namespace/:resource/:name', async (req, res) => {
       data: result,
     })
   } catch (error: any) {
-    console.error('Error updating resource:', error)
+    logger.error('Error updating resource', error)
     res.status(500).json({ error: error.message })
   }
 })
@@ -459,7 +462,7 @@ router.put('/:resource/:name', async (req, res) => {
       data: result,
     })
   } catch (error: any) {
-    console.error('Error updating resource:', error)
+    logger.error('Error updating resource', error)
     res.status(500).json({ error: error.message })
   }
 })
@@ -494,7 +497,7 @@ router.delete('/namespaces/:namespace/:resource/:name', async (req, res) => {
       message: `${config.kind} '${name}' deleted successfully from namespace '${namespace}'`,
     })
   } catch (error: any) {
-    console.error('Error deleting resource:', error)
+    logger.error('Error deleting resource', error)
     res.status(500).json({ error: error.message })
   }
 })
@@ -530,7 +533,7 @@ router.delete('/:resource/:name', async (req, res) => {
       message: `${config.kind} '${name}' deleted successfully`,
     })
   } catch (error: any) {
-    console.error('Error deleting resource:', error)
+    logger.error('Error deleting resource', error)
     res.status(500).json({ error: error.message })
   }
 })

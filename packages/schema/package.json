@@ -15,14 +15,10 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "watch": "tsc --watch"
+    "dev": "tsc --watch"
   },
   "dependencies": {
     "@keystone-6/core": "^6.5.1",
     "@keystone-6/fields-document": "^9.1.1"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.5.0"
   }
 }

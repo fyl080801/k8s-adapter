@@ -33,6 +33,9 @@ export default withAuth(
       provider: 'sqlite',
       url: 'file:./keystone.db',
     },
+    ui: {
+      isDisabled: true,
+    },
     lists: schema.lists as any,
     session,
     server: {

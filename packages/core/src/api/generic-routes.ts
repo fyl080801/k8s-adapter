@@ -5,6 +5,9 @@
 
 import { Router, Request, Response } from 'express'
 import { K8sResourceConfig, getAllResourceConfigs } from '../k8s/types'
+import { createLogger } from '../lib/logger'
+
+const logger = createLogger('API')
 
 /**
  * Create list route handler for a resource
@@ -26,9 +29,8 @@ function createListHandler(config: K8sResourceConfig) {
         const namespaceList = (namespaces as string)
           .split(',')
           .map(ns => ns.trim())
-        console.log(
-          `[API] Querying ${config.plural} from namespaces:`,
-          namespaceList,
+        logger.debug(
+          `Querying ${config.plural} from namespaces: ${namespaceList.join(', ')}`,
         )
         query.namespace = { $in: namespaceList }
       }
@@ -38,8 +40,8 @@ function createListHandler(config: K8sResourceConfig) {
 
       const skip = (Number(page) - 1) * Number(limit)
 
-      console.log(`[API] Query:`, JSON.stringify(query))
-      console.log(`[API] Fetching ${config.plural}...`)
+      logger.debug(`Query: ${JSON.stringify(query)}`)
+      logger.debug(`Fetching ${config.plural}...`)
 
       const items = await config.model
         .find(query)
@@ -51,15 +53,15 @@ function createListHandler(config: K8sResourceConfig) {
         .exec()
 
       const queryTime = Date.now() - startTime
-      console.log(
-        `[API] Query completed in ${queryTime}ms, found ${items.length} items`,
+      logger.debug(
+        `Query completed in ${queryTime}ms, found ${items.length} items`,
       )
 
-      console.log(`[API] Counting total documents...`)
+      logger.debug(`Counting total documents...`)
       const countStart = Date.now()
       const total = await config.model.countDocuments(query).lean()
       const countTime = Date.now() - countStart
-      console.log(`[API] Count completed in ${countTime}ms, total: ${total}`)
+      logger.debug(`Count completed in ${countTime}ms, total: ${total}`)
 
       res.json({
         data: items,
@@ -79,7 +81,7 @@ function createListHandler(config: K8sResourceConfig) {
             : undefined,
       })
     } catch (error) {
-      console.error(`Error fetching ${config.plural}:`, error)
+      logger.error(`Error fetching ${config.plural}`, error)
       res.status(500).json({ error: `Failed to fetch ${config.plural}` })
     }
   }
@@ -114,7 +116,7 @@ function createDetailHandler(config: K8sResourceConfig) {
 
       res.json(item)
     } catch (error) {
-      console.error(`Error fetching ${config.name}:`, error)
+      logger.error(`Error fetching ${config.name}`, error)
       res.status(500).json({ error: `Failed to fetch ${config.name}` })
     }
   }
@@ -155,8 +157,8 @@ function createNamespaceListHandler(config: K8sResourceConfig) {
         },
       })
     } catch (error) {
-      console.error(
-        `Error fetching ${config.plural} for namespace ${req.params.namespace}:`,
+      logger.error(
+        `Error fetching ${config.plural} for namespace ${req.params.namespace}`,
         error,
       )
       res.status(500).json({ error: `Failed to fetch ${config.plural}` })
@@ -214,12 +216,12 @@ export function generateRoutes(): Router {
       // List all: GET /api/v1/nodes
       router.get(`/${config.plural}`, createListHandler(config))
 
-      // Get specific resource: GET /api/v1/nodes/{name}
-      router.get(`/${config.plural}/:name`, (req, res) => {
-        // Inject empty namespace for cluster-scoped resources
-        req.params.namespace = undefined as any
-        return createDetailHandler(config)(req, res)
-      })
+      // // Get specific resource: GET /api/v1/nodes/{name}
+      // router.get(`/${config.plural}/:name`, (req, res) => {
+      //   // Inject empty namespace for cluster-scoped resources
+      //   req.params.namespace = undefined as any
+      //   return createDetailHandler(config)(req, res)
+      // })
     }
   })
 
@@ -271,7 +273,7 @@ export function generateStatsHandler() {
 
       res.json(stats)
     } catch (error) {
-      console.error('Error fetching statistics:', error)
+      logger.error('Error fetching statistics', error)
       res.status(500).json({ error: 'Failed to fetch statistics' })
     }
   }
@@ -291,7 +293,7 @@ export function generateStatusHandler(informer: {
         informers: status,
       })
     } catch (error) {
-      console.error('Error fetching status:', error)
+      logger.error('Error fetching status', error)
       res.status(500).json({ error: 'Failed to fetch status' })
     }
   }

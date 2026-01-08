@@ -1,10 +1,17 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "esnext",
-    "module": "commonjs",
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
-  }
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "noEmit": false
+  },
+  "references": [
+    {
+      "path": "../schema"
+    }
+  ],
+  "include": ["src/**/*", "*.ts"],
+  "exclude": ["node_modules", "dist", ".keystone"]
 }

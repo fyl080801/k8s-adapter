@@ -1,10 +1,42 @@
 {
   "compilerOptions": {
-    "target": "esnext",
+    /* Base Options */
+    "target": "ES2022",
+    "lib": ["ES2022"],
     "module": "commonjs",
+    "moduleResolution": "node",
+    /* Strict Type-Checking Options */
     "strict": true,
-    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    /* Module Resolution Options */
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
-  }
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    /* Emit Options */
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    /* Advanced Options */
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true,
+    /* Path Mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@k8s-adapter/schema": ["./packages/schema/src"],
+      "@k8s-adapter/core": ["./packages/core/src"]
+    }
+  },
+  "references": [
+    {
+      "path": "./packages/schema"
+    },
+    {
+      "path": "./packages/core"
+    }
+  ],
+  "exclude": ["node_modules", "dist", ".keystone"]
 }

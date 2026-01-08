@@ -7,22 +7,16 @@
     "pnpm": ">=8.0.0"
   },
   "scripts": {
-    "dev": "pnpm --filter @k8s-adapter/schema watch & pnpm --filter @k8s-adapter/core dev",
-    "dev:core": "pnpm --filter @k8s-adapter/core dev",
-    "dev:schema": "pnpm --filter @k8s-adapter/schema watch",
+    "dev": "pnpm run -r --parallel dev",
     "start": "pnpm --filter @k8s-adapter/core start",
-    "build": "pnpm --filter @k8s-adapter/schema build && pnpm --filter @k8s-adapter/core build",
-    "db:generate": "pnpm --filter @k8s-adapter/core db:generate",
-    "test:api": "pnpm --filter @k8s-adapter/core test:api",
-    "lint": "pnpm --filter @k8s-adapter/core lint",
-    "lint:fix": "pnpm --filter @k8s-adapter/core lint:fix",
-    "format": "pnpm --filter @k8s-adapter/core format",
-    "format:check": "pnpm --filter @k8s-adapter/core format:check",
-    "verify": "bash scripts/verify-monorepo.sh",
+    "build": "pnpm run -r build",
+    "lint": "eslint \"packages/**/*.ts\" --fix",
+    "format": "prettier --write \"packages/**/*.ts\"",
     "clean": "pnpm -r --parallel clean"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.57.1",
@@ -32,7 +26,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.4.2",
-    "typescript": "^5.5.0"
+    "typescript": "~5.5.4"
   },
   "lint-staged": {
     "packages/**/*.{ts,tsx}": [
